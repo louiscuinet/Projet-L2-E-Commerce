@@ -12,10 +12,10 @@ error_reporting( E_ALL );
 
 define('IS_DEV', true);  //true en phase de développement, false en phase de production
 
-define('BD_SERVER', 'mariadb-hostname'); // nom d'hôte ou adresse IP du serveur de base de données
-define('BD_NAME', 'bookshop_db'); // nom de la base sur le serveur de base de données
-define('BD_USER', 'bookshop_user'); // nom de l'utilisateur de la base
-define('BD_PASS', 'bookshop_pass'); // mot de passe de l'utilisateur de la base
+define('BD_SERVER', 'localhost'); 
+define('BD_NAME', 'bookshop_db'); 
+define('BD_USER', 'root');        
+define('BD_PASS', '');
 
 define('LMIN_CRITERE_RECHERCHE', 2);
 
