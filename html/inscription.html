@@ -1,0 +1,98 @@
+<!doctype html>
+
+<html lang="fr">
+
+<head>
+    <title>BookShop | Inscription</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="../styles/bookshop.css">
+</head>
+
+<body>
+    <main>
+        <aside>
+            <a href="http://www.facebook.com" target="_blank"></a>
+            <a href="http://www.twitter.com" target="_blank"></a>
+            <a href="http://plus.google.com" target="_blank"></a>
+            <a href="http://www.pinterest.com" target="_blank"></a>
+        </aside>
+
+        <header>
+            <nav>
+                <a href="../index.php" title="Retour à la page d'accueil"></a>
+                <a href="../php/recherche.php" title="Effectuer une recherche"></a>
+                <a href="../php/panier.php" title="Voir votre panier"></a>
+                <a href="../php/liste.php" title="Voir une liste de cadeaux"></a>
+                <a href="../php/compte.php" title="Consulter votre compte"></a>
+                <a href="../php/deconnexion.php" title="Se déconnecter"></a>
+            </nav>
+            <img src="../images/soustitre.png" alt="sous titre">
+        </header>
+
+    
+        <h1>Inscription à BookShop</h1>
+
+        <form method="POST" action="../php/inscription_2.php">
+
+            <section>
+        
+            <h2>Informations personnelles</h2>
+            
+            <p>Merci de remplir les informations suivantes (tous les champs sont obligatoires) </p>
+                
+                <table>
+                    <tr>
+                        <td>Votre nom :</td>
+                        <td><input type="text" name="nom" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Votre prenom :</td>
+                        <td><input type="text" name="prenom" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Votre adresse email :</td>
+                        <td><input type="email" name="email" value="" placeholder="xxx@yyy.zz"></td>
+                    </tr>
+                    <tr>
+                        <td>Votre numéro de téléphone :</td>
+                        <td><input type="tel" name="telephone" value="" placeholder="Format : 03.81.66.64.52" pattern="^(\d{2}\.){4}\d{2}$"></td>
+                    </tr>
+                    <tr>
+                        <td>Votre date de naissance :</td>
+                        <td><input type="date" name="naissance" value=""></td>
+                    </tr>
+                    <tr>
+                        <td>Choisissez un mot de passe :</td>
+                        <td><input type="password" name="pass1" value="" placeholder="4 caractères minimum"></td>
+                    </tr>
+                    <tr>
+                        <td>Répétez le mot de passe :</td>
+                        <td><input type="password" name="pass2" value=""></td>
+                    </tr>
+                </table>
+            
+            </section>
+
+            <section>
+                <h2>Validation</h2>
+
+                <p>
+                    <input type="checkbox" name="cbCGU" id="condUsage" value="1"><label for="condUsage">J'ai bien lu et j'accepte les conditions générales d'utilisation.</label>
+                </p>
+
+                <p>
+                    <input type="submit" name="btnInscription" value="S'inscrire">
+                    <input type="reset" value="Réinitialiser">
+                </p>
+            </section>
+            
+        </form>
+        <footer>
+            BookShop &amp; Partners &copy; 2025 -
+            <a href="#">A propos</a> -
+            <a href="#">Emplois @ BookShop</a> -
+            <a href="#">Conditions d'utilisation</a>
+        </footer>
+    </main>
+</body>
+</html>
