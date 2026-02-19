@@ -1,10 +1,10 @@
 <?php
 /** 1ère version : liste des livres */
 
+ob_start(); //démarre la bufferisation
+
 require_once '../php/bibli_generale.php';
 require_once '../php/bibli_bookshop.php';
-
-ob_start(); //démarre la bufferisation
 
 $bd = bdConnect();
 

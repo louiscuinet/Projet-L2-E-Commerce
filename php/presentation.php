@@ -3,7 +3,13 @@
 require_once './bibli_generale.php';
 require_once ('./bibli_bookshop.php');
 
-affDebutEnseigneEntete('BookShop | Présentation', false);
+// bufferisation des sorties
+ob_start();
+
+// démarrage ou reprise de la session
+session_start();
+
+affDebutEnseigneEntete('BookShop | Présentation');
 
 affContenuL();
 

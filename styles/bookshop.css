@@ -396,7 +396,13 @@ article.arRecherche img{
 article.arRecherche .addToCart, article.arRecherche .addToWishlist{
     right: 10px;
 }
-
+figure.details img {
+    float: left;        /* décale l’image à gauche, texte à droite */
+    margin-left: 20px;  /* espace entre l’image et son bord gauche (optionnel) */
+    margin-right: 20px; /* espace entre l’image et le texte */
+    max-width: 200px;   /* fixe une largeur max adaptée */
+    height: auto;       /* garde les proportions */
+}
 
 /****************************************************************
                             FORMULAIRE
@@ -489,11 +495,23 @@ form section:last-of-type p:last-of-type input:hover, form input[type=submit]:ho
 
 .error{
     color: red;
+    width: 80%;
+    border: solid 2px red;
+    padding: 5px;
+    margin: 10px auto;
 }
 
 form .center {
     text-align: center;
 }
+
+/*pagination recherche
+*/
+.pagination {
+  text-align: center;   /* centre le contenu inline à l'intérieur */
+}
+
+
 
 /**********************************************************
                         Pied de page
@@ -504,5 +522,7 @@ footer {
     text-align: center;
     font-size: 10px;
 }
+
+
 
 /*______________ FIN DE LA FEUILLE DE STYLES ______________________*/

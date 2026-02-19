@@ -9,21 +9,27 @@
 require_once '../php/bibli_generale.php';
 require_once '../php/bibli_bookshop.php';
 
-ob_start(); //démarre la bufferisation
+// bufferisation des sorties
+ob_start();
+
+// démarrage ou reprise de la session
+session_start();
 
 /*------------------------- Etape 1 --------------------------------------------
-- vérification des paramètres reçus dans l'URL
+- vérification des paramètres reçu dans l'URL
 ------------------------------------------------------------------------------*/
 
 // erreurs détectées dans l'URL
 $errs = [];
-
+$position = isset($_GET['p']) && ctype_digit($_GET['p']) ? (int)$_GET['p'] : 0;
+$pagination = 4;
+$totalLivres = isset($_GET['t']) && ctype_digit($_GET['t']) ? (int)$_GET['t'] : -1;
 // critères de recherche si pas de paramètres reçus dans $_GET
 $recherche = array('type' => 'auteur', 'quoi' => '');
 
 if ($_GET){ // s'il y a des paramètres dans l'URL, c'est-à-dire <=> count($_GET) > 0
-    if (! parametresControle('get', array('type', 'quoi'))){
-        $errs[] = 'L\'URL doit être de la forme "' . basename($_SERVER['PHP_SELF']) .'?type=xxx&quoi=yyy".';
+    if (! parametresControle('get', array('type', 'quoi'), array('p', 't'))) {
+    	$errs[] = 'L\'URL doit être de la forme "' . basename($_SERVER['PHP_SELF']) .'?type=xxx&quoi=yyy".';
     }
     else{
         $oks = ['titre', 'auteur'];
@@ -46,9 +52,9 @@ if ($_GET){ // s'il y a des paramètres dans l'URL, c'est-à-dire <=> count($_GE
 - génération du code HTML de la page
 ------------------------------------------------------------------------------*/
 
-affDebutEnseigneEntete('BookShop | Recherche', false);
+affDebutEnseigneEntete('BookShop | Recherche');
 
-affContenuL($recherche, $errs);
+affContenuL($recherche, $errs, $position, $pagination, $totalLivres);
 
 affPiedFin();
 
@@ -66,76 +72,79 @@ ob_end_flush();
  *
  * @return void
  */
-function affContenuL(array $recherche, array $erreurs) : void {
-    
-    echo '<h3>Recherche par une partie du nom d\'un auteur ou du titre</h3>'; 
-    
-    /* choix de la méthode get pour avoir la même forme d'URL lors d'une soumission du formulaire, 
-    et lorsqu'on accède à la page suite à un clic sur un nom d'un auteur */
+function affContenuL(array $recherche, array $erreurs, int $position, int $pagination, int &$totalLivres) : void {
+    echo '<h3>Recherche par nom d\'auteur ou titre</h3>';
     echo '<form action="', basename($_SERVER['PHP_SELF']), '" method="get">',
-            // la protection des sorties avec htmlProtegerSorties() est réalisée au dernier moment
-            // juste avant l'encapsulation du critère de recherche dans le code HTML
-            '<p class="center">Rechercher <input type="text" name="quoi" minlength="2" value="', htmlProtegerSorties($recherche['quoi']), '">',
-            ' dans ', 
-                '<select name="type">', 
-                    '<option value="auteur" ', $recherche['type'] == 'auteur' ? 'selected' : '', '>auteurs</option>', 
-                    '<option value="titre" ', $recherche['type'] == 'titre' ? 'selected' : '','>titre</option>', 
-                '</select>', 
-            '<input type="submit" value="Rechercher">', // pas d'attribut name pour qu'il n'y ait pas d'élément correspondant
-                                                        // au bouton submit dans l'URL lors de la soumission du formulaire
-            '</p>', 
-          '</form>';
-    
+         '<p class="center">Rechercher <input type="text" name="quoi" minlength="2" value="', htmlProtegerSorties($recherche['quoi']), '">',
+         ' dans ',
+         '<select name="type">',
+             '<option value="auteur" ', $recherche['type'] == 'auteur' ? 'selected' : '', '>auteurs</option>',
+             '<option value="titre" ', $recherche['type'] == 'titre' ? 'selected' : '', '>titre</option>',
+         '</select>',
+         '<input type="submit" value="Rechercher">',
+         '</p>',
+         '</form>';
+
     if ($erreurs) {
-        $nbErr = count($erreurs);
-        $pluriel = $nbErr > 1 ? 's':'';
-        echo '<p class="error">',
-                '<strong>Erreur',$pluriel, ' détectée', $pluriel, ' :</strong>';
-        for ($i = 0; $i < $nbErr; $i++) {
-                echo '<br>', $erreurs[$i];
-        }
-        echo '</p>';
-        return; // ===> Fin de la fonction
+        echo '<p class="error"><strong>Erreur(s) :</strong><br>', implode('<br>', $erreurs), '</p>';
+        return;
     }
 
-    if ($recherche['quoi']){ //si recherche à faire en base de données
-    
-        // ouverture de la connexion, requête
+    if ($recherche['quoi']) {
         $bd = bdConnect();
-        
-        // la protection des entrées avec mysqli_real_escape_string() est réalisée au dernier moment
-        // juste avant l'ajout du critère de recherche dans la requête SQL
         $q = mysqli_real_escape_string($bd, $recherche['quoi']);
-        
-        if ($recherche['type'] == 'auteur') {
-            $critere = " WHERE liID in (SELECT al_IDLivre FROM aut_livre INNER JOIN auteur ON al_IDAuteur = auID WHERE auNom LIKE '%$q%')";
-        } 
-        else {
-            $critere = " WHERE liTitre LIKE '%$q%'";    
+        $critere = $recherche['type'] == 'auteur'
+            ? "WHERE liID in (SELECT al_IDLivre FROM aut_livre INNER JOIN auteur ON al_IDAuteur = auID WHERE auNom LIKE '%$q%')"
+            : "WHERE liTitre LIKE '%$q%'";
+
+        $sqlTotal = "SELECT COUNT(DISTINCT liID) FROM ((livre INNER JOIN editeur ON liIDEditeur = edID)
+                        INNER JOIN aut_livre ON al_IDLivre = liID)
+                        INNER JOIN auteur ON al_IDAuteur = auID $critere";
+
+        if ($totalLivres <= 0) {
+            $resTotal = bdSendRequest($bd, $sqlTotal);
+            $row = mysqli_fetch_row($resTotal);
+            $totalLivres = (int)$row[0];
+            mysqli_free_result($resTotal);
         }
 
-        $sql = "SELECT  liID, liTitre, liPrix, liNbPages, liISBN13, edNom, edWeb,
-                        GROUP_CONCAT(CONCAT(auPrenom, '|', auNom) SEPARATOR '@') AS auteurs
-                FROM    ((livre  INNER JOIN editeur ON liIDEditeur = edID)
-                                 INNER JOIN aut_livre ON al_IDLivre = liID)
-                                 INNER JOIN auteur ON al_IDAuteur = auID
+        $sql = "SELECT liID, liTitre, liPrix, liNbPages, liISBN13, edNom, edWeb,
+                       GROUP_CONCAT(CONCAT(auPrenom, '|', auNom) SEPARATOR '@') AS auteurs
+                FROM ((livre INNER JOIN editeur ON liIDEditeur = edID)
+                      INNER JOIN aut_livre ON al_IDLivre = liID)
+                      INNER JOIN auteur ON al_IDAuteur = auID
                 $critere
                 GROUP BY liID
-                ORDER BY liID";
+                ORDER BY liID
+                LIMIT $position, $pagination";
 
         $res = bdSendRequest($bd, $sql);
-        
         if (mysqli_num_rows($res) == 0){
             echo '<p>Aucun livre trouvé.</p>';
-        }
-        else{
+        } else {
             while ($t = mysqli_fetch_assoc($res)) {
                 affLivreL($t);
             }
+
+            // Affichage de la pagination
+            echo '<div class="pagination" style="text-align: center;">';
+            for ($i = 0; $i < $totalLivres; $i += $pagination) {
+                $numPage = ($i / $pagination) + 1;
+                if ($i == $position) {
+                    echo " <strong>$numPage</strong> ";
+                } else {
+                    echo ' <a href="', basename($_SERVER['PHP_SELF']),
+                        '?type=', $recherche['type'],
+                        '&quoi=', urlencode($recherche['quoi']),
+                        '&p=', $i,
+                        '&t=', $totalLivres,
+                        '">', $numPage, '</a> ';
+                }
+            }
+            echo '</div>';
         }
-        // libération des ressources
+
         mysqli_free_result($res);
-        // déconnexion du serveur de bases de données
         mysqli_close($bd);
     }
 }
@@ -155,8 +164,7 @@ function affLivreL(array $livre) : void {
     $livre = htmlProtegerSorties($livre);
     echo
         '<article class="arRecherche">',
-            // TODO : à modifier pour le projet
-            '<a class="addToCart" href="#" title="Ajouter au panier"></a>',
+            '<a class="addToCart" href="./panier.php?action=ajouter&id=', htmlspecialchars($livre['liID']), '" title="Ajouter au panier"></a>',
             '<a class="addToWishlist" href="#" title="Ajouter à la liste de cadeaux"></a>',
             '<a href="details.php?article=', $livre['liID'], '" title="Voir détails"><img src="../images/livres/', $livre['liID'], '_mini.jpg" alt="',
             $livre['liTitre'],'"></a>',

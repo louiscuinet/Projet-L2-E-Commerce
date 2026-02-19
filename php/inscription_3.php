@@ -45,11 +45,12 @@ function affContenuL(array $errs) : void {
         echo    '</p>';
     }
     else {
-        echo '<p>Les données soumises sont valides.</p>';
+        echo '<p>Un nouvel utilisateur a été ajouté dans la table "client" de la base de données.</p>';
     }
 
     echo    '</section>';
 }
+
 
 /**
  * Traitement d'une demande d'inscription
@@ -64,6 +65,8 @@ function affContenuL(array $errs) : void {
  *   nous souhaitons que l'application fonctionne également correctement sur les vieux navigateurs qui ne supportent pas encore HTML5
  * - une éventuelle modification de l'input de type date en input de type text car c'est ce que font les navigateurs qui ne supportent
  *   pas les input de type date
+ *
+ * Si les données soumises sont valides, un nouvel utilisateur est ajouté dans la table utilisateur.
  *
  *  @return array    un tableau contenant les erreurs s'il y en a
  */
@@ -160,8 +163,32 @@ function traitementInscriptionL(): array {
     // Libération de la mémoire associée au résultat de la requête
     mysqli_free_result($res);
 
+    // si erreurs --> retour
+    if (count($erreurs) > 0) {
+        // fermeture de la connexion à la base de données
+        mysqli_close($bd);
+        return $erreurs;   //===> FIN DE LA FONCTION
+    }
+
+    // calcul du hash du mot de passe pour enregistrement dans la base.
+    $pass = password_hash($_POST['pass1'], PASSWORD_DEFAULT);
+
+    $pass = mysqli_real_escape_string($bd, $pass);
+
+    $dateNaissance = $annee*10000 + $mois*100 + $jour;
+
+    $nom = mysqli_real_escape_string($bd, $nom);
+    $prenom = mysqli_real_escape_string($bd, $prenom);
+    $tel = mysqli_real_escape_string($bd, $tel);
+
+    $sql = "INSERT INTO client (cliEmail, cliTelephone, cliPassword, cliPrenom, cliNom, cliDateNaissance)
+            VALUES ('$email', '$tel', '$pass', '$prenom', '$nom', $dateNaissance)";
+
+    bdSendRequest($bd, $sql);
+
+
     // fermeture de la connexion à la base de données
     mysqli_close($bd);
 
-    return $erreurs;
+    return $erreurs; // tableau vide
 }

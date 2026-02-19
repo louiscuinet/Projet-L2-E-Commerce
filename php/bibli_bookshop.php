@@ -19,17 +19,27 @@ define('BD_PASS', 'bookshop_pass'); // mot de passe de l'utilisateur de la base
 
 define('LMIN_CRITERE_RECHERCHE', 2);
 
+
+// limites liées aux tailles des champs de la table client
+define('LMAX_NOM', 50);         // taille du champ cliNom de la table client
+define('LMAX_PRENOM', 50);      // taille du champ cliPrenom de la table client
+define('LMAX_EMAIL', 100);      // taille du champ cliEmail de la table client
+define('LMAX_TELEPHONE', 14);   // taille du champ cliTelephone de la table client
+
+define('AGE_MINIMUM', 15);
+
+define('LMIN_PASSWORD', 4);
+
 //_______________________________________________________________
 /**
  * Affichage du début de la page HTML (jusqu'à l'élément header inclus).
  *
  * @param  string  $titre       le titre de la page
- * @param  bool    $connecte    true quand l'utilisateur est connecté (ou authentifié), false sinon
  * @param  string  $prefixe     chemin relatif vers la racine du site
  *
  * @return void
  */
-function affDebutEnseigneEntete(string $titre, bool $connecte, string $prefixe = '..') : void {
+function affDebutEnseigneEntete(string $titre, string $prefixe = '..') : void {
     affDebut($titre, "$prefixe/styles/bookshop.css");
     echo
         '<main>',
@@ -50,13 +60,25 @@ function affDebutEnseigneEntete(string $titre, bool $connecte, string $prefixe =
                     'compte'      => array( 'position' => 4, 'title' => 'Consulter votre compte'),
                     'deconnexion' => array( 'position' => 5, 'title' => 'Se déconnecter'));
 
-    if (!$connecte){
+    if (!estAuthentifie()){
         unset($liens['compte']);
         unset($liens['deconnexion']);
         ++$liens['recherche']['position'];
         ++$liens['panier']['position'];
         ++$liens['liste']['position'];
-        // TODO : Peut-on implémenter les 3 incrémentations ci-dessus avec un foreach ?
+        /* TODO : Peut-on implémenter les 3 incrémentations ci-dessus avec un foreach ?
+        oui: on peut incrémenter la clé 'position' des éléments 'recherche', 'panier' et 'liste' dans le tableau $liens.
+		if (!estAuthentifie()) {
+		    unset($liens['compte']);
+		    unset($liens['deconnexion']);
+
+		    foreach (['recherche', 'panier', 'liste'] as $cle) {
+			++$liens[$cle]['position'];
+		}
+
+	    $liens['connexion'] = array('position' => 5, 'title' => 'Se connecter');
+	}
+	*/
         $liens['connexion'] = array( 'position' => 5, 'title' => 'Se connecter');
 //         // Debug :
 //         echo '<pre>', print_r($liens, true), '</pre>';
@@ -89,4 +111,48 @@ function affPiedFin() : void {
     '</main>';
 
     affFin();
+}
+
+//_______________________________________________________________
+/**
+* Détermine si l'utilisateur est authentifié
+*
+* @return bool     true si l'utilisateur est authentifié, false sinon
+*/
+function estAuthentifie(): bool {
+    return  isset($_SESSION['cliID']);
+}
+
+
+//_______________________________________________________________
+/**
+ * Termine une session et effectue une redirection vers la page transmise en paramètre
+ *
+ * Cette fonction est appelée quand l'utilisateur se déconnecte "normalement" et quand une
+ * tentative de piratage est détectée. On pourrait améliorer l'application en différenciant ces
+ * 2 situations. Et en cas de tentative de piratage, on pourrait faire des traitements pour
+ * stocker par exemple l'adresse IP, etc.
+ *
+ * @param string    $page URL de la page vers laquelle l'utilisateur est redirigé
+ *
+ * @return void
+ */
+function sessionExit(string $page = '../index.php'): void {
+
+    // suppression de toutes les variables de session
+    $_SESSION = array();
+
+    if (ini_get("session.use_cookies")) {
+        // suppression du cookie de session
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 86400,
+            $params["path"], $params["domain"],
+            $params["secure"], $params["httponly"]
+        );
+    }
+
+    session_destroy();
+
+    header("Location: $page");
+    exit();
 }

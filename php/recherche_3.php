@@ -14,7 +14,11 @@ recherche_3.php?type=auteur&quoi=Moore
 require_once '../php/bibli_generale.php';
 require_once '../php/bibli_bookshop.php';
 
-ob_start(); //démarre la bufferisation
+// bufferisation des sorties
+ob_start();
+
+// démarrage ou reprise de la session
+session_start();
 
 /*------------------------- Etape 1 --------------------------------------------
 - vérification des paramètres reçus dans l'URL
@@ -45,7 +49,7 @@ else{
 ------------------------------------------------------------------------------*/
 
 
-affDebutEnseigneEntete('BookShop | Recherche', false);
+affDebutEnseigneEntete('BookShop | Recherche');
 
 affContenuL($quoi, $errs);
 
